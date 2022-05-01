@@ -213,5 +213,7 @@ int main() {
 	print(objective,constraints);
 	generate(objective,constraints);
 	print(objective,constraints);
+	generate(objective,constraints);
+	print(objective,constraints);
 	
 }
