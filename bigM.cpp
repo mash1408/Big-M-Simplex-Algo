@@ -120,15 +120,29 @@ void generate(map<string, float> &objective, vector<map<string, float>> &constra
 				currentRow->second/= pivot(leavingVariable,enterKey);
 		leavingVariable=constraint;
 		}
+
 	for(auto &constraint: constraints)
 		if(constraint!=leavingVariable){
 			map<string, float>::iterator jter=leavingVariable.begin();
-			for (map<string, float>::iterator iter = constraint.begin(); iter!= constraint.end();++iter,++jter)
-				iter->second-=pivot(constraint,enterKey)*jter->second;
+			float el=pivot(constraint,enterKey);
+			for (map<string, float>::iterator iter = constraint.begin(); iter!= constraint.end();++iter){
+				if(iter->first!="equality"){
+					float val=iter->second-el*jter->second;
+					iter->second=val;
+				}
+				++jter;
+			}
 		}
-	map<string, float>::iterator jter=leavingVariable.begin();
-	for (map<string,float>::iterator objIter = objective.begin(); objIter!= objective.end();++objIter,++jter)
-				objIter->second-=pivot(objective,enterKey)*jter->second;
+	float el= pivot(objective,enterKey);
+	 map<string, float>::iterator jter=leavingVariable.begin();
+	 for (map<string,float>::iterator objIter = objective.begin(); objIter!=objective.end();++objIter){
+	if(jter->first!="equality")
+	 objIter->second=objIter->second-el*jter->second;
+	 else
+	 	--objIter;
+	 jter++;
+	  }
+	
 }
 
 void standardForm(map<string, float> &objective, vector<map<string, float>> &constraints) {
