@@ -7,6 +7,7 @@ using namespace std;
 int penalty = 0;
 int slacks = 0;
 int surplus = 0;
+bool maximize=true;
 vector <string> basicKeys;
 void initialise() {
 	for(int i=0;i<penalty;i++)
@@ -36,6 +37,7 @@ void optimise(map<string, float> &objective, vector<map<string, float>> &constra
 	for (auto &var: copyconstraints) {
 		var.erase(var.find("equality")->first);
 	}
+	
 	for(auto basic: basicKeys){
 		
 		if(objective.at(basic)!=0){
@@ -48,10 +50,10 @@ void optimise(map<string, float> &objective, vector<map<string, float>> &constra
 			map<string, float>::iterator jt = temp.begin();
 			for (auto it = objective.begin(); it != objective.end(); it++)
     		{
-					if(val<0)
+					// if(val<0)
 						it->second=it->second-val*jt->second;
-					else
-						it->second+=objective.at(basic)*jt->second;
+					// else
+					// 	it->second+=objective.at(basic)*jt->second;
 					jt++;
 			}
 		}
@@ -66,7 +68,7 @@ float pivot(map<string, float> it, string enterKey) {
 
 string findEntryWithLargestValue(map<string, float> it)
 {
-	pair<string, float> entryWithMaxValue
+	pair<string, float> entryWithMinValue
 		= make_pair("x", 0);
 	//remove solution key
 		it.erase(it.find("sol")->first);
@@ -75,20 +77,28 @@ string findEntryWithLargestValue(map<string, float> it)
 	for (currentEntry = it.begin();
 		currentEntry != it.end();
 		++currentEntry) {
-		if (currentEntry->second
-			> entryWithMaxValue.second) {
+		if (maximize && currentEntry->second
+			< entryWithMinValue.second) {
 
-			entryWithMaxValue
+			entryWithMinValue
 				= make_pair(
 				currentEntry->first,
 				currentEntry->second);
 		}
+		else if(!maximize && currentEntry->second
+			> entryWithMinValue.second)
+			entryWithMinValue
+				= make_pair(
+				currentEntry->first,
+				currentEntry->second);
 	}
-	if (entryWithMaxValue.second>0)
-		return entryWithMaxValue.first;
+	if (maximize && entryWithMinValue.second<0)
+		return entryWithMinValue.first;
+	else if(!maximize && entryWithMinValue.second>0)
+		return entryWithMinValue.first;
 	else
-		entryWithMaxValue.first = "stop";
-	return entryWithMaxValue.first;
+		entryWithMinValue.first = "stop";
+	return entryWithMinValue.first;
 }
 
 map<string, float> optimalityConition(string enteringVariable, vector<map<string, float>> constraints) {
@@ -98,25 +108,29 @@ map<string, float> optimalityConition(string enteringVariable, vector<map<string
 			= make_pair(item, item.at("sol") / item.at(enteringVariable));
 		v.push_back(entry);
 	}
-	pair<map<string, float>, float> max
+	pair<map<string, float>, float> min
 		= v.at(0);
+	// for (auto & item : v) 
+	// 	cout<<item.second<<endl;
 	for (auto & item : v) {
-		if (item.second<max.second)
-			max = item;
+		if (item.second>0 && item.second<min.second)
+			min = item;
 	}
 	vector<map<string,float>>::iterator it;
-	it = find (constraints.begin(), constraints.end(), max.first);
+	it = find (constraints.begin(), constraints.end(), min.first);
 	return *it;
 }
 
 void generate(map<string, float> &objective, vector<map<string, float>> &constraints) {
 	string enterKey =  findEntryWithLargestValue(objective);
 	map<string,float> leavingVariable=optimalityConition(enterKey,constraints);
-
-	
+	// cout<<enterKey<<endl;
+	// for (map<string,float>::iterator currentRow = leavingVariable.begin(); currentRow!= leavingVariable.end();++currentRow)
+	// 	cout<<currentRow->second<<endl;
 	for(auto &constraint: constraints)
 		if(constraint == leavingVariable){
 			for (map<string,float>::iterator currentRow = constraint.begin(); currentRow!= constraint.end();++currentRow)
+				if(currentRow->first!="equality")
 				currentRow->second/= pivot(leavingVariable,enterKey);
 		leavingVariable=constraint;
 		}
@@ -179,8 +193,11 @@ void standardForm(map<string, float> &objective, vector<map<string, float>> &con
 
 		}
 	}
-	for (int i = 0; i < penalty; i++) 
-		objective.insert(pair<string, float>("R" + to_string(i + 1), 100));
+	for (int i = 0; i < penalty; i++)
+		if(maximize) 
+			objective.insert(pair<string, float>("R" + to_string(i + 1), -100));
+		else
+			objective.insert(pair<string, float>("R" + to_string(i + 1), 100));
 	
 		for (int i = 0; i<slacks; i++)
 		objective.insert(pair<string, float>("SU" + to_string(i + 1), 0));
@@ -189,7 +206,8 @@ void standardForm(map<string, float> &objective, vector<map<string, float>> &con
 		objective.insert(pair<string, float>("SL" + to_string(i + 1), 0));
 
 	for (std::map<string, float>::iterator it = objective.begin(); it != objective.end(); ++it)
-		it->second = -1 * it->second;
+		if(it->second!=0)
+			it->second = -1 * it->second;
 
 	objective.insert(pair<string, float>("sol", 0));
 
@@ -197,23 +215,30 @@ void standardForm(map<string, float> &objective, vector<map<string, float>> &con
 
 int main() {
 
-	map<string, float> objective{ { "x1",4 } ,{ "x2",1 } };
+	map<string, float> objective{ { "x1",20 } ,{ "x2",10 }};
 	vector<map<string, float>> constraints;
-	
-	map<string, float> constraint1{ { "x1",3 } ,{ "x2",1 },{ "equality",0 },{ "sol", 3 } };
-	map<string, float> constraint2{ { "x1",4 } ,{ "x2",3 },{ "equality",1 } ,{ "sol", 6 } };
-	map<string, float> constraint3{ { "x1",1 } ,{ "x2",2 },{ "equality",-1 } ,{ "sol", 4 } };
+	maximize=false;
+	map<string, float> constraint1{ { "x1",1 } ,{ "x2",2 },{ "equality",-1 },{ "sol", 40 } };
+	map<string, float> constraint2{ { "x1",3 } ,{ "x2",1 },{ "equality",1 } ,{ "sol", 30 } };
+	map<string, float> constraint3{ { "x1",4 } ,{ "x2",3 },{ "equality",1 } ,{ "sol", 60 } };
 	constraints.push_back(constraint1);
 	constraints.push_back(constraint2);
 	constraints.push_back(constraint3);
 	standardForm(objective, constraints);
-	initialise();
-	
+	initialise();		
+	cout<<endl<<"************************************Input***************************************"<<endl<<endl;
+	print(objective,constraints);
 	optimise(objective, constraints);
+	cout<<endl<<"************************************Standard Form***************************************"<<endl<<endl;
 	print(objective,constraints);
-	generate(objective,constraints);
-	print(objective,constraints);
-	generate(objective,constraints);
-	print(objective,constraints);
+	int i=0;
+	while(findEntryWithLargestValue(objective)!="stop"){
+		cout<<endl<<"************************************Output after iteration"<<i+1<<"***************************************"<<endl<<endl;
+		generate(objective,constraints);
+		print(objective,constraints);
+		i++;
+	}
+		
+
 	
 }
