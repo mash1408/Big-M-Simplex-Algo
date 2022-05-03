@@ -214,13 +214,18 @@ void standardForm(map<string, float> &objective, vector<map<string, float>> &con
 }
 
 int main() {
+	/*
+		Manipulate input: objective and constraints here
+		use equality: 0-=,1->= and -1-<=
+		modify maximise flag appropriately
 
-	map<string, float> objective{ { "x1",20 } ,{ "x2",10 }};
+	*/
+	map<string, float> objective{ { "x1",1 } ,{ "x2",2 },{ "x3",3 }};
 	vector<map<string, float>> constraints;
 	maximize=false;
-	map<string, float> constraint1{ { "x1",1 } ,{ "x2",2 },{ "equality",-1 },{ "sol", 40 } };
-	map<string, float> constraint2{ { "x1",3 } ,{ "x2",1 },{ "equality",1 } ,{ "sol", 30 } };
-	map<string, float> constraint3{ { "x1",4 } ,{ "x2",3 },{ "equality",1 } ,{ "sol", 60 } };
+	map<string, float> constraint1{ { "x1",2 } ,{ "x2",-1 },{ "x3",1 },{ "equality",1 },{ "sol", 4 } };
+	map<string, float> constraint2{ { "x1",1 } ,{ "x2",1 },{ "x3",2 },{ "equality",-1 } ,{ "sol", 8 } };
+	map<string, float> constraint3{ { "x1",0 } ,{ "x2",1 },{ "x3",-1 },{ "equality",1 } ,{ "sol", 2 } };
 	constraints.push_back(constraint1);
 	constraints.push_back(constraint2);
 	constraints.push_back(constraint3);
@@ -237,6 +242,8 @@ int main() {
 		generate(objective,constraints);
 		print(objective,constraints);
 		i++;
+		if(i==3)
+		break;
 	}
 		
 
