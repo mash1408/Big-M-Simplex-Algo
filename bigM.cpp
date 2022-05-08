@@ -3,6 +3,8 @@
 #include <map>
 #include<string>
 # include <algorithm>
+#include <limits>
+
 using namespace std;
 int penalty = 0;
 int slacks = 0;
@@ -100,7 +102,11 @@ string findEntryWithLargestValue(map<string, float> it)
 		entryWithMinValue.first = "stop";
 	return entryWithMinValue.first;
 }
-
+bool sortbysec(const pair<map<string, float>,float> &a,
+              const pair<map<string, float>,float> &b)
+{
+    return (a.second > b.second);
+}
 map<string, float> optimalityConition(string enteringVariable, vector<map<string, float>> constraints) {
 	vector <pair<map<string, float>, float>> v;
 	for (auto item : constraints) {
@@ -108,12 +114,13 @@ map<string, float> optimalityConition(string enteringVariable, vector<map<string
 			= make_pair(item, item.at("sol") / item.at(enteringVariable));
 		v.push_back(entry);
 	}
+	sort(v.begin(), v.end(),sortbysec);
 	pair<map<string, float>, float> min
 		= v.at(0);
-	// for (auto & item : v) 
-	// 	cout<<item.second<<endl;
+	for (auto & item : v) 
+		cout<<item.second<<endl;
 	for (auto & item : v) {
-		if (item.second>0 && item.second<min.second)
+		if (item.second>0 && item.second<min.second && item.second!=numeric_limits<float>::infinity())
 			min = item;
 	}
 	vector<map<string,float>>::iterator it;
@@ -124,7 +131,7 @@ map<string, float> optimalityConition(string enteringVariable, vector<map<string
 void generate(map<string, float> &objective, vector<map<string, float>> &constraints) {
 	string enterKey =  findEntryWithLargestValue(objective);
 	map<string,float> leavingVariable=optimalityConition(enterKey,constraints);
-	// cout<<enterKey<<endl;
+	cout<<enterKey<<endl;
 	// for (map<string,float>::iterator currentRow = leavingVariable.begin(); currentRow!= leavingVariable.end();++currentRow)
 	// 	cout<<currentRow->second<<endl;
 	for(auto &constraint: constraints)
@@ -242,8 +249,6 @@ int main() {
 		generate(objective,constraints);
 		print(objective,constraints);
 		i++;
-		if(i==3)
-		break;
 	}
 		
 
